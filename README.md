@@ -1,3 +1,35 @@
+## Optimizing the performance of Electra 
+
+1. Efficient fine-tuning with LoRA and QLoRA
+
+2. Efficient inferencing with quantization
+
+3. Efficient inferencing with pruning
+
+## Project Plan
+1. Understand Electra
+2. Be able to run through the commands in the Training section
+3. Add profiling tools
+    a. Weights and Biases
+    b. PyTorch Profiler
+4. Start Task 1
+    a. Run a vanilla fine-tuning run
+    b. Add LoRA for fine-tuning
+    c. Add QLoRA for fine-tuning
+    d. Visualize results
+5. Start Task 2 (with the best model from task 1)
+    a. Run a vanilla inferencing run 
+    b. Add dynamic quantization
+    c. Add post-training static quantization
+    d. Visualize results
+6. Start Task 3
+    a. Add structured pruning
+    b. Add unstructured pruning
+    c. Visualize results
+7. Run one with the best results from task 1-3
+
+
+
 <img src="./electra.png"></img>
 
 ## Electra - Pytorch
