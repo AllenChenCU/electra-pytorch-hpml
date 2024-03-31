@@ -1,5 +1,8 @@
 MIT License
 
+Electra-pytorch-hpml is a fork of Electra-pytorch. Allen Chen is the author
+of new/modified files of Electra-pytorch-hpml.
+
 Copyright (c) 2020 Phil Wang
 
 Permission is hereby granted, free of charge, to any person obtaining a copy

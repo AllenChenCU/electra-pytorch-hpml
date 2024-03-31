@@ -1,5 +1,6 @@
 ## Optimizing the performance of Electra 
 
+
 1. Efficient fine-tuning with LoRA and QLoRA
 
 2. Efficient inferencing with quantization
@@ -7,7 +8,7 @@
 3. Efficient inferencing with pruning
 
 ## Project Plan
-1. Understand Electra
+1. Understand Electra and this repository of its PyTorch implementation
 2. Be able to run through the commands in the Training section
 3. Add profiling tools
     a. Weights and Biases

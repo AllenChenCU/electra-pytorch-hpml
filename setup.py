@@ -19,7 +19,12 @@ setup(
     #'transformers==3.0.2',
     'transformers',
     'scipy',
-    'scikit-learn'
+    'scikit-learn',
+    'loralib',
+    'tqdm==4.66.1',
+    'peft', 
+    'bitsandbytes', 
+    'accelerate', 
   ],
   setup_requires=[
     'pytest-runner'
