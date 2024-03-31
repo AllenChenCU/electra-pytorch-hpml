@@ -122,12 +122,12 @@ def train(args, train_dataset, model, tokenizer):
         activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], 
         record_shapes=True, 
         profile_memory=True,
-        schedule=torch.profiler.schedule(
-            skip_first=0,
-            wait=0,
-            warmup=0, 
-            active=1,
-        ), 
+        # schedule=torch.profiler.schedule(
+        #     skip_first=0,
+        #     wait=0,
+        #     warmup=0, 
+        #     active=1,
+        # ), 
     ) as prof: 
         with record_function("model_finetune"):
             tr_loss, logging_loss = 0.0, 0.0
@@ -152,7 +152,7 @@ def train(args, train_dataset, model, tokenizer):
                         batch[2] if args.model_type in ["bert", "xlnet", "albert"] else None
                     )  # XLM, DistilBERT, RoBERTa, and XLM-RoBERTa don't use segment_ids
                     outputs = model(**inputs)
-                    loss = outputs[0]  # model outputs are always tuple in transformers (see doc)
+                    loss = outputs[0].detach()  # model outputs are always tuple in transformers (see doc)
 
                     if args.n_gpu > 1:
                         loss = loss.mean()  # mean() to average on multi-gpu parallel training
@@ -226,7 +226,7 @@ def train(args, train_dataset, model, tokenizer):
                 if args.max_steps > 0 and global_step > args.max_steps:
                     train_iterator.close()
                     break
-                prof.step()
+                #prof.step()
     logger.info(prof.key_averages().table(sort_by=f"{args.device}_time_total", row_limit=15))
 
     return global_step, tr_loss / global_step
