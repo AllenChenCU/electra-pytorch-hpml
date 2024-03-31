@@ -104,6 +104,6 @@ def evaluate(args, model, tokenizer, prefix=""):
                     logger.info("  %s = %s", key, str(result[key]))
                     writer.write("%s = %s\n" % (key, str(result[key])))
 
-    logger.info(prof.key_averages().table(sort_by=f"{args.device}_time_total", row_limit=10).to_string())
+    logger.info(prof.key_averages().table(sort_by=f"{args.device}_time_total", row_limit=10))
 
     return results

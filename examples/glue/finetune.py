@@ -219,6 +219,6 @@ def train(args, train_dataset, model, tokenizer):
             if args.max_steps > 0 and global_step > args.max_steps:
                 train_iterator.close()
                 break
-    logger.info(prof.key_averages().table(sort_by=f"{args.device}_time_total", row_limit=10).to_string())
+    logger.info(prof.key_averages().table(sort_by=f"{args.device}_time_total", row_limit=10))
 
     return global_step, tr_loss / global_step
