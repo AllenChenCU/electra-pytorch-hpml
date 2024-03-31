@@ -165,6 +165,7 @@ def train(args, train_dataset, model, tokenizer):
                             scaled_loss.backward()
                     else:
                         loss.backward()
+                        loss.detach()
 
                     if step % 10 == 0:
                         print(step, loss.item())
