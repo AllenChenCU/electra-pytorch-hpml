@@ -123,9 +123,10 @@ def train(args, train_dataset, model, tokenizer):
         record_shapes=True, 
         profile_memory=True,
         schedule=torch.profiler.schedule(
-            wait=1,
-            warmup=1, 
-            active=2,
+            skip_first=0,
+            wait=0,
+            warmup=0, 
+            active=1,
         ), 
     ) as prof: 
         with record_function("model_finetune"):
