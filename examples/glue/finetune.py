@@ -122,6 +122,7 @@ def train(args, train_dataset, model, tokenizer):
         activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], 
         record_shapes=True, 
         profile_memory=True,
+        with_stack=False, 
         # schedule=torch.profiler.schedule(
         #     skip_first=0,
         #     wait=0,
@@ -168,7 +169,7 @@ def train(args, train_dataset, model, tokenizer):
                     if step % 10 == 0:
                         print(step, loss.item())
 
-                    tr_loss += loss.detach().item()
+                    tr_loss += loss.item()
                     if (step + 1) % args.gradient_accumulation_steps == 0 or (
                         # last step in epoch but step is always smaller than gradient_accumulation_steps
                         len(epoch_iterator) <= args.gradient_accumulation_steps
