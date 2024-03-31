@@ -122,6 +122,11 @@ def train(args, train_dataset, model, tokenizer):
         activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], 
         record_shapes=True, 
         profile_memory=True,
+        schedule=torch.profiler.schedule(
+            wait=1,
+            warmup=1, 
+            active=2,
+        ), 
     ) as prof: 
         with record_function("model_finetune"):
             tr_loss, logging_loss = 0.0, 0.0
