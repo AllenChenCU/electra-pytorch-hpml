@@ -152,7 +152,7 @@ def train(args, train_dataset, model, tokenizer):
                         batch[2] if args.model_type in ["bert", "xlnet", "albert"] else None
                     )  # XLM, DistilBERT, RoBERTa, and XLM-RoBERTa don't use segment_ids
                     outputs = model(**inputs)
-                    loss = outputs[0].detach()  # model outputs are always tuple in transformers (see doc)
+                    loss = outputs[0]  # model outputs are always tuple in transformers (see doc)
 
                     if args.n_gpu > 1:
                         loss = loss.mean()  # mean() to average on multi-gpu parallel training
@@ -168,7 +168,7 @@ def train(args, train_dataset, model, tokenizer):
                     if step % 10 == 0:
                         print(step, loss.item())
 
-                    tr_loss += loss.item()
+                    tr_loss += loss.detach().item()
                     if (step + 1) % args.gradient_accumulation_steps == 0 or (
                         # last step in epoch but step is always smaller than gradient_accumulation_steps
                         len(epoch_iterator) <= args.gradient_accumulation_steps
