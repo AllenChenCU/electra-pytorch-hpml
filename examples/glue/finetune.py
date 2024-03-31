@@ -222,11 +222,10 @@ def train(args, train_dataset, model, tokenizer):
                     if args.max_steps > 0 and global_step > args.max_steps:
                         epoch_iterator.close()
                         break
-
-                    prof.step()
                 if args.max_steps > 0 and global_step > args.max_steps:
                     train_iterator.close()
                     break
+                prof.step()
     logger.info(prof.key_averages().table(sort_by=f"{args.device}_time_total", row_limit=15))
 
     return global_step, tr_loss / global_step
