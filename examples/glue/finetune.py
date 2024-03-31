@@ -118,17 +118,22 @@ def train(args, train_dataset, model, tokenizer):
         logger.info("  Continuing training from global step %d", global_step)
         logger.info("  Will skip the first %d steps in the first epoch", steps_trained_in_current_epoch)
 
+    def trace_handler(p):
+        logger.info(p.key_averages().table(sort_by=f"{args.device}_time_total", row_limit=15))
+        p.export_chrome_trace(os.path.join(args.output_dir, str(p.step_num) + ".json"))
+
     with profile(
         activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], 
         record_shapes=True, 
         profile_memory=True,
         with_stack=False, 
-        # schedule=torch.profiler.schedule(
-        #     skip_first=0,
-        #     wait=0,
-        #     warmup=0, 
-        #     active=1,
-        # ), 
+        schedule=torch.profiler.schedule(
+            skip_first=0,
+            wait=0,
+            warmup=0, 
+            active=1,
+        ), 
+        on_trace_ready=trace_handler,
     ) as prof: 
         with record_function("model_finetune"):
             tr_loss, logging_loss = 0.0, 0.0
@@ -165,7 +170,6 @@ def train(args, train_dataset, model, tokenizer):
                             scaled_loss.backward()
                     else:
                         loss.backward()
-                        loss.detach()
 
                     if step % 10 == 0:
                         print(step, loss.item())
@@ -228,7 +232,7 @@ def train(args, train_dataset, model, tokenizer):
                 if args.max_steps > 0 and global_step > args.max_steps:
                     train_iterator.close()
                     break
-                #prof.step()
-    logger.info(prof.key_averages().table(sort_by=f"{args.device}_time_total", row_limit=15))
+                prof.step()
+    #logger.info(prof.key_averages().table(sort_by=f"{args.device}_time_total", row_limit=15))
 
     return global_step, tr_loss / global_step
