@@ -250,7 +250,6 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
         config=config,
         cache_dir=args.cache_dir if args.cache_dir else None,
         quantization_config=bnb_config, 
-        load_in_4bit=True, 
         device_map={"":0}, 
         torch_dtype=torch.bfloat16, 
     )
