@@ -271,6 +271,8 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
             bias="none", 
             modules_to_save=["classifier"], 
         )
+        model.gradient_checkpointing_enable()
+        model = prepare_model_for_kbit_training(model)
         model = get_peft_model(model, lora_config)
 
     tokenizer = wrap_tokenizer(new_tokenizer(args.vocab_path), pad_token='[PAD]')
