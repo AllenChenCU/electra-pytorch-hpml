@@ -250,11 +250,13 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
         config=config,
         cache_dir=args.cache_dir if args.cache_dir else None,
         quantization_config=bnb_config, 
+        load_in_4bit=True, 
         device_map={"":0}, 
+        torch_dtype=torch.bfloat16, 
     )
     if args.finetune_method.lower() == "qlora":
         model.gradient_checkpointing_enable()
-        #model = prepare_model_for_kbit_training(model)
+        model = prepare_model_for_kbit_training(model)
     if args.finetune_method.lower() in ["lora", "qlora"]:
         lora_config = LoraConfig(
             task_type=TaskType.SEQ_CLS,
