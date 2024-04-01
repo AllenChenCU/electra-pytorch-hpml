@@ -253,9 +253,9 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
         device_map={"":0}, 
         torch_dtype=torch.bfloat16, 
     )
-    if args.finetune_method.lower() == "qlora":
-        model.gradient_checkpointing_enable()
-        model = prepare_model_for_kbit_training(model)
+    #if args.finetune_method.lower() == "qlora":
+        #model.gradient_checkpointing_enable()
+        #model = prepare_model_for_kbit_training(model)
         # for name, param in model.named_parameters():
         #     if any(l in name.lower() for l in ["lora", "lokr", "ia3", "base_layer"]):
         #         param.data = param.data.to(torch.float32)

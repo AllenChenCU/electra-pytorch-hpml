@@ -22,7 +22,7 @@ setup(
     'scikit-learn',
     'loralib',
     'tqdm==4.66.1',
-    'peft==0.7.1', 
+    'peft', 
     'bitsandbytes', 
     'accelerate', 
   ],
