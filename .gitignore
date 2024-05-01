@@ -131,3 +131,5 @@ dmypy.json
 # Data
 data
 output
+create_gcp_instance.py
+electra_small_cache/

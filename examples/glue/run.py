@@ -170,6 +170,9 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
     parser.add_argument("--finetune_method", type=str, default="original", help="Finetune methodologies: original, lora, or qlora")
     args = parser.parse_args()
 
+    ###################################################################################################
+    # Config
+    ###################################################################################################
     if (
         os.path.exists(args.output_dir)
         and os.listdir(args.output_dir)
@@ -214,6 +217,10 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
     # Set seed
     set_seed(args)
 
+
+    ###################################################################################################
+    # Prepare
+    ###################################################################################################
     # Prepare GLUE task
     args.task_name = args.task_name.lower()
     if args.task_name not in processors:
@@ -287,7 +294,9 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
     # Compute number of trainable parameters
     log_trainable_parameters(model)
 
-    # Training
+    ###################################################################################################
+    # Finetune
+    ###################################################################################################
     if args.do_train:
         train_dataset = load_and_cache_examples(args, args.task_name, tokenizer, evaluate=False)
         global_step, tr_loss = train(args, train_dataset, model, tokenizer)
@@ -319,7 +328,9 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
         # tokenizer = AutoTokenizer.from_pretrained(args.output_dir)
         model.to(args.device)
 
-    # Evaluation
+    ###################################################################################################
+    # Inference
+    ###################################################################################################
     results = {}
     if args.do_eval and args.local_rank in [-1, 0]:
         # tokenizer = AutoTokenizer.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)
