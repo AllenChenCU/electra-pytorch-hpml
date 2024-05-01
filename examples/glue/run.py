@@ -258,7 +258,7 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
         cache_dir=args.cache_dir if args.cache_dir else None,
         quantization_config=bnb_config, 
         device_map={"":0}, 
-        torch_dtype=torch.bfloat16, 
+        #torch_dtype=torch.bfloat16, 
     )
     #if args.finetune_method.lower() == "qlora":
         #model.gradient_checkpointing_enable()
