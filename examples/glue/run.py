@@ -258,7 +258,6 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
         config=config,
         cache_dir=args.cache_dir if args.cache_dir else None,
         quantization_config=bnb_config, 
-        load_in4bit=True,
         device_map="auto", #{"":0}, 
         #torch_dtype=torch.bfloat16, 
     )
@@ -286,8 +285,8 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
             modules_to_save=["classifier"], 
         )
         model.gradient_checkpointing_enable() # reduce number of stored activations
-        model.enable_input_require_grads()
-        model = prepare_model_for_kbit_training(model)
+        #model.enable_input_require_grads()
+        #model = prepare_model_for_kbit_training(model)
         model = get_peft_model(model, lora_config)
 
     tokenizer = wrap_tokenizer(new_tokenizer(args.vocab_path), pad_token='[PAD]')
