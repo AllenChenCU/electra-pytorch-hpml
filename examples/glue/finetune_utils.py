@@ -213,6 +213,13 @@ def log_trainable_parameters(model):
     )
 
 
+def log_gpu_memory():
+    peak_memory = torch.cuda.max_memory_allocated(device=None)
+    curr_memory = torch.cuda.memory_allocated(device=None)
+    logger.info(f"Current GPU memory used: {curr_memory}")
+    logger.info(f"Peak GPU memory used: {peak_memory}")
+
+
 class AverageMeter(object):
     """Computes and stores the average and current value"""
     def __init__(self, name, fmt=':f'):

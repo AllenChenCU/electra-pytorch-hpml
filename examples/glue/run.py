@@ -40,7 +40,7 @@ from processors import glue_convert_examples_to_features as convert_examples_to_
 from processors import glue_output_modes as output_modes
 from processors import glue_processors as processors
 from processors import glue_tasks_num_labels as task_num_labels
-from finetune_utils import set_seed, wrap_tokenizer, load_and_cache_examples, log_trainable_parameters
+from finetune_utils import set_seed, wrap_tokenizer, load_and_cache_examples, log_trainable_parameters, log_gpu_memory
 from finetune import train
 from inference import evaluate
 
@@ -299,6 +299,8 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
 
     # Compute number of trainable parameters
     log_trainable_parameters(model)
+    logger.info("Before training: only model is loaded into GPU")
+    log_gpu_memory()
 
     ###################################################################################################
     # Finetune
@@ -307,6 +309,8 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
         train_dataset = load_and_cache_examples(args, args.task_name, tokenizer, evaluate=False)
         global_step, tr_loss = train(args, train_dataset, model, tokenizer)
         logger.info(" global_step = %s, average loss = %s", global_step, tr_loss)
+        logger.info("After finetuning: ")
+        log_gpu_memory()
         # if args.finetune_method.lower() == "lora":
         #     model = model.merge_and_unload()
 
@@ -367,6 +371,8 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
             result = evaluate(args, model, tokenizer, prefix=prefix)
             result = dict((k + "_{}".format(global_step), v) for k, v in result.items())
             results.update(result)
+            logger("After eval:")
+            log_gpu_memory()
 
     return results
 
