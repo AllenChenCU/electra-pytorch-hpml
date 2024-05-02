@@ -48,7 +48,7 @@ from inference import evaluate
 logger = logging.getLogger(__name__)
 
 
-def main(task='MRPC', seed=42, ckpt='bert-base-uncased'):#'google/electra-small-discriminator'):
+def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
     parser = argparse.ArgumentParser()
 
     # Required parameters
@@ -276,8 +276,8 @@ def main(task='MRPC', seed=42, ckpt='bert-base-uncased'):#'google/electra-small-
         lora_config = LoraConfig(
             task_type=TaskType.SEQ_CLS,
             inference_mode=False,
-            r=32, 
-            lora_alpha=64, 
+            r=64, 
+            lora_alpha=128, 
             target_modules=["key", "query", "value", "all-linear"], 
             lora_dropout=0.1, 
             bias="none", 
