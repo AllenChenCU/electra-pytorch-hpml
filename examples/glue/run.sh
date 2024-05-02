@@ -65,8 +65,9 @@
 
 
 # Command for the QLoRA run
+#bert-base-uncased
 python examples/glue/run.py \
-  --model_name_or_path bert-base-uncased \
+  --model_name_or_path google/electra-small-discriminator \
   --task_name MRPC \
   --do_train True \
   --do_eval True \
