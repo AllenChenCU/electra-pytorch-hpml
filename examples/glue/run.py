@@ -278,7 +278,7 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
             inference_mode=False,
             r=64, 
             lora_alpha=64, 
-            target_modules="all-linear", #["key", "query", "value", "all-linear"], 
+            target_modules=["key", "query", "value"], 
             lora_dropout=0.1, 
             bias="none", 
             modules_to_save=["classifier"], 
