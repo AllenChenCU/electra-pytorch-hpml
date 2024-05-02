@@ -18,6 +18,7 @@
 import logging
 import os
 import json
+import time
 
 from tqdm import tqdm, trange
 import torch
@@ -26,7 +27,7 @@ from torch.utils.data import DataLoader, RandomSampler
 from torch.utils.data.distributed import DistributedSampler
 from torch.profiler import profile, record_function, ProfilerActivity
 
-from finetune_utils import get_linear_schedule_with_warmup, set_seed
+from finetune_utils import get_linear_schedule_with_warmup, set_seed, AverageMeter, ProgressMeter
 from inference import evaluate
 
 
@@ -122,117 +123,130 @@ def train(args, train_dataset, model, tokenizer):
         logger.info(p.key_averages().table(sort_by=f"{args.device}_time_total", row_limit=15))
         p.export_chrome_trace(os.path.join(args.output_dir, str(p.step_num) + ".json"))
 
-    with profile(
-        activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], 
-        record_shapes=False, 
-        profile_memory=True,
-        with_stack=False, 
-        # schedule=torch.profiler.schedule(
-        #     skip_first=0,
-        #     wait=0,
-        #     warmup=0, 
-        #     active=1,
-        # ), 
-        # on_trace_ready=trace_handler,
-    ) as prof: 
-        with record_function("model_finetune"):
-            tr_loss, logging_loss = 0.0, 0.0
+
+    tr_loss, logging_loss = 0.0, 0.0
+    model.zero_grad()
+    train_iterator = trange(
+        epochs_trained, int(args.num_train_epochs), desc="Epoch", disable=args.local_rank not in [-1, 0],
+    )
+    set_seed(args)  # Added here for reproductibility
+
+    # Time Config
+    batch_time = AverageMeter('Batch_time', ':6.4f')
+    dataload_time = AverageMeter('Dataload_time', ':6.4f')
+    finetune_time = AverageMeter('Finetune_time', ':6.4f')
+    torch.cuda.synchronize()
+    end = time.perf_counter()
+
+    for _ in train_iterator:
+        epoch_iterator = tqdm(train_dataloader, desc="Iteration", disable=args.local_rank not in [-1, 0])
+        for step, batch in enumerate(epoch_iterator):
+
+            # measure data loading time
+            torch.cuda.synchronize()
+            curr_time_dataload = time.perf_counter()
+            dataload_time.update(curr_time_dataload - end)
+
+            # Skip past any already trained steps if resuming training
+            if steps_trained_in_current_epoch > 0:
+                steps_trained_in_current_epoch -= 1
+                continue
+            
+            # start measuring training start time
+            torch.cuda.synchronize()
+            training_start = time.perf_counter()
+
+            model.train()
+            batch = tuple(t.to(args.device) for t in batch)
+            inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3]}
+            inputs["token_type_ids"] = (
+                batch[2] if args.model_type in ["bert", "xlnet", "albert"] else None
+            )  # XLM, DistilBERT, RoBERTa, and XLM-RoBERTa don't use segment_ids
+            outputs = model(**inputs)
+            loss = outputs[0]  # model outputs are always tuple in transformers (see doc)
+
+            if args.n_gpu > 1:
+                loss = loss.mean()  # mean() to average on multi-gpu parallel training
+            if args.gradient_accumulation_steps > 1:
+                loss = loss / args.gradient_accumulation_steps
+
+            if args.fp16:
+                with amp.scale_loss(loss, optimizer) as scaled_loss:
+                    scaled_loss.backward()
+            else:
+                loss.backward()
+
+            if step % 10 == 0:
+                print(step, loss.item())
+
+            tr_loss += loss.item()
+            if args.fp16:
+                torch.nn.utils.clip_grad_norm_(amp.master_params(optimizer), args.max_grad_norm)
+            else:
+                torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
+
+            optimizer.step()
+            scheduler.step()  # Update learning rate schedule
             model.zero_grad()
-            train_iterator = trange(
-                epochs_trained, int(args.num_train_epochs), desc="Epoch", disable=args.local_rank not in [-1, 0],
-            )
-            set_seed(args)  # Added here for reproductibility
-            for _ in train_iterator:
-                epoch_iterator = tqdm(train_dataloader, desc="Iteration", disable=args.local_rank not in [-1, 0])
-                for step, batch in enumerate(epoch_iterator):
+            global_step += 1
 
-                    # Skip past any already trained steps if resuming training
-                    if steps_trained_in_current_epoch > 0:
-                        steps_trained_in_current_epoch -= 1
-                        continue
+            torch.cuda.synchronize()
+            curr_time_training = time.perf_counter()
+            finetune_time.update(curr_time_training - training_start)
 
-                    model.train()
-                    batch = tuple(t.to(args.device) for t in batch)
-                    inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3]}
-                    inputs["token_type_ids"] = (
-                        batch[2] if args.model_type in ["bert", "xlnet", "albert"] else None
-                    )  # XLM, DistilBERT, RoBERTa, and XLM-RoBERTa don't use segment_ids
-                    outputs = model(**inputs)
-                    loss = outputs[0]  # model outputs are always tuple in transformers (see doc)
+            if args.local_rank in [-1, 0] and args.logging_steps > 0 and global_step % args.logging_steps == 0:
+                logs = {}
+                if (
+                    args.local_rank == -1 and args.evaluate_during_training
+                ):  # Only evaluate when single GPU otherwise metrics may not average well
+                    results = evaluate(args, model, tokenizer)
+                    for key, value in results.items():
+                        eval_key = "eval_{}".format(key)
+                        logs[eval_key] = value
 
-                    if args.n_gpu > 1:
-                        loss = loss.mean()  # mean() to average on multi-gpu parallel training
-                    if args.gradient_accumulation_steps > 1:
-                        loss = loss / args.gradient_accumulation_steps
+                loss_scalar = (tr_loss - logging_loss) / args.logging_steps
+                learning_rate_scalar = scheduler.get_lr()[0]
+                logs["learning_rate"] = learning_rate_scalar
+                logs["loss"] = loss_scalar
+                logging_loss = tr_loss
 
-                    if args.fp16:
-                        with amp.scale_loss(loss, optimizer) as scaled_loss:
-                            scaled_loss.backward()
-                    else:
-                        loss.backward()
+                print(json.dumps({**logs, **{"step": global_step}}))
 
-                    if step % 10 == 0:
-                        print(step, loss.item())
+            if args.local_rank in [-1, 0] and args.save_steps > 0 and global_step % args.save_steps == 0:
+                # Save model checkpoint
+                output_dir = os.path.join(args.output_dir, "checkpoint-{}".format(global_step))
+                if not os.path.exists(output_dir):
+                    os.makedirs(output_dir)
+                model_to_save = (
+                    model.module if hasattr(model, "module") else model
+                )  # Take care of distributed/parallel training
+                model_to_save.save_pretrained(output_dir)
+                tokenizer.save_pretrained(output_dir)
 
-                    tr_loss += loss.item()
-                    if (step + 1) % args.gradient_accumulation_steps == 0 or (
-                        # last step in epoch but step is always smaller than gradient_accumulation_steps
-                        len(epoch_iterator) <= args.gradient_accumulation_steps
-                        and (step + 1) == len(epoch_iterator)
-                    ):
-                        if args.fp16:
-                            torch.nn.utils.clip_grad_norm_(amp.master_params(optimizer), args.max_grad_norm)
-                        else:
-                            torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
+                torch.save(args, os.path.join(output_dir, "training_args.bin"))
+                logger.info("Saving model checkpoint to %s", output_dir)
 
-                        optimizer.step()
-                        scheduler.step()  # Update learning rate schedule
-                        model.zero_grad()
-                        global_step += 1
+                torch.save(optimizer.state_dict(), os.path.join(output_dir, "optimizer.pt"))
+                torch.save(scheduler.state_dict(), os.path.join(output_dir, "scheduler.pt"))
+                logger.info("Saving optimizer and scheduler states to %s", output_dir)
 
-                        if args.local_rank in [-1, 0] and args.logging_steps > 0 and global_step % args.logging_steps == 0:
-                            logs = {}
-                            if (
-                                args.local_rank == -1 and args.evaluate_during_training
-                            ):  # Only evaluate when single GPU otherwise metrics may not average well
-                                results = evaluate(args, model, tokenizer)
-                                for key, value in results.items():
-                                    eval_key = "eval_{}".format(key)
-                                    logs[eval_key] = value
+            if args.max_steps > 0 and global_step > args.max_steps:
+                epoch_iterator.close()
+                break
 
-                            loss_scalar = (tr_loss - logging_loss) / args.logging_steps
-                            learning_rate_scalar = scheduler.get_lr()[0]
-                            logs["learning_rate"] = learning_rate_scalar
-                            logs["loss"] = loss_scalar
-                            logging_loss = tr_loss
+            # measure elapsed time
+            torch.cuda.synchronize()
+            curr_time_batch = time.perf_counter()
+            batch_time.update(curr_time_batch - end)
+            torch.cuda.synchronize()
+            end = time.perf_counter()
 
-                            print(json.dumps({**logs, **{"step": global_step}}))
-
-                        if args.local_rank in [-1, 0] and args.save_steps > 0 and global_step % args.save_steps == 0:
-                            # Save model checkpoint
-                            output_dir = os.path.join(args.output_dir, "checkpoint-{}".format(global_step))
-                            if not os.path.exists(output_dir):
-                                os.makedirs(output_dir)
-                            model_to_save = (
-                                model.module if hasattr(model, "module") else model
-                            )  # Take care of distributed/parallel training
-                            model_to_save.save_pretrained(output_dir)
-                            tokenizer.save_pretrained(output_dir)
-
-                            torch.save(args, os.path.join(output_dir, "training_args.bin"))
-                            logger.info("Saving model checkpoint to %s", output_dir)
-
-                            torch.save(optimizer.state_dict(), os.path.join(output_dir, "optimizer.pt"))
-                            torch.save(scheduler.state_dict(), os.path.join(output_dir, "scheduler.pt"))
-                            logger.info("Saving optimizer and scheduler states to %s", output_dir)
-
-                    if args.max_steps > 0 and global_step > args.max_steps:
-                        epoch_iterator.close()
-                        break
-                if args.max_steps > 0 and global_step > args.max_steps:
-                    train_iterator.close()
-                    break
-                #prof.step()
-    logger.info(prof.key_averages().table(sort_by=f"{args.device}_time_total", row_limit=15))
+        if args.max_steps > 0 and global_step > args.max_steps:
+            train_iterator.close()
+            break
+    
+    logger.info(f"Total Time per epoch: {batch_time.sum}/{args.num_train_epochs} = {batch_time.sum/args.num_train_epochs}")
+    logger.info(f"Total Dataload Time per epoch: {dataload_time.sum}/{args.num_train_epochs} = {dataload_time.sum/args.num_train_epochs}")
+    logger.info(f"Total Finetune Time per epoch: {finetune_time.sum}/{args.num_train_epochs} = {finetune_time.sum/args.num_train_epochs}")
 
     return global_step, tr_loss / global_step
