@@ -276,10 +276,10 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
         lora_config = LoraConfig(
             task_type=TaskType.SEQ_CLS,
             inference_mode=False,
-            r=8, 
-            lora_alpha=16, 
-            #target_modules=["key", "query", "value"], 
-            lora_dropout=0.05, 
+            r=16, 
+            lora_alpha=32, 
+            target_modules=["q", "v"], #["key", "query", "value"], 
+            lora_dropout=0.1, 
             bias="none", 
             modules_to_save=["classifier"], 
         )
