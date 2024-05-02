@@ -245,8 +245,8 @@ def train(args, train_dataset, model, tokenizer):
             train_iterator.close()
             break
     
-    logger.info(f"Total Time per epoch: {batch_time.sum}/{args.num_train_epochs} = {batch_time.sum/args.num_train_epochs}")
-    logger.info(f"Total Dataload Time per epoch: {dataload_time.sum}/{args.num_train_epochs} = {dataload_time.sum/args.num_train_epochs}")
-    logger.info(f"Total Finetune Time per epoch: {finetune_time.sum}/{args.num_train_epochs} = {finetune_time.sum/args.num_train_epochs}")
+    logger.info(f"Total Time per epoch: {batch_time.sum}/{args.num_train_epochs} = {batch_time.sum/args.num_train_epochs} seconds")
+    logger.info(f"Total Dataload Time per epoch: {dataload_time.sum}/{args.num_train_epochs} = {dataload_time.sum/args.num_train_epochs} seconds")
+    logger.info(f"Total Finetune Time per epoch: {finetune_time.sum}/{args.num_train_epochs} = {finetune_time.sum/args.num_train_epochs} seconds")
 
     return global_step, tr_loss / global_step
