@@ -77,5 +77,5 @@ python examples/glue/run.py \
   --num_train_epochs 20.0 \
   --output_dir output/qlora \
   --overwrite_output_dir True \
-  --cache_dir electra_small_cache \
   --finetune_method qlora \
+#  --cache_dir electra_small_cache \
