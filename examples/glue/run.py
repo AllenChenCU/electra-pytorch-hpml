@@ -269,12 +269,11 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
         #         param.data = param.data.to(torch.float32)
         #         param.requires_grad = True
     if args.finetune_method.lower() in ["lora", "qlora"]:
+        # Freeze the weights of original model 
         for param in model.parameters():
             param.requires_grad = False
             param.data = param.data.to(torch.float16)
-            # if param.ndim == 1:
-            #     # cast the small parameters (e.g. layernorm) to fp32 for stability
-            #     param.data = param.data.to(torch.float32)
+            
         lora_config = LoraConfig(
             task_type=TaskType.SEQ_CLS,
             inference_mode=False,
