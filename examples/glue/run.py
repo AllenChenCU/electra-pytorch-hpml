@@ -251,14 +251,12 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
         num_labels=num_labels,
         finetuning_task=args.task_name,
         #cache_dir=args.cache_dir if args.cache_dir else None,
-        cache_dir=False,
     )
     model = AutoModelForSequenceClassification.from_pretrained(
         args.model_name_or_path,
         from_tf=bool(".ckpt" in args.model_name_or_path),
         config=config,
         #cache_dir=args.cache_dir if args.cache_dir else None,
-        cache_dir=False,
         quantization_config=bnb_config, 
         #device_map="auto", #{"":0}, 
         torch_dtype=torch.bfloat16, 
