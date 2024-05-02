@@ -276,8 +276,8 @@ def main(task='MRPC', seed=42, ckpt='bert-base-uncased'):#'google/electra-small-
         lora_config = LoraConfig(
             task_type=TaskType.SEQ_CLS,
             inference_mode=False,
-            r=16, 
-            lora_alpha=32, 
+            r=32, 
+            lora_alpha=64, 
             target_modules=["key", "query", "value", "all-linear"], 
             lora_dropout=0.1, 
             bias="none", 
