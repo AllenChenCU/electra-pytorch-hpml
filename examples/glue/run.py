@@ -48,7 +48,7 @@ from inference import evaluate
 logger = logging.getLogger(__name__)
 
 
-def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
+def main(task='MRPC', seed=42, ckpt='bert-base-uncased'):#'google/electra-small-discriminator'):
     parser = argparse.ArgumentParser()
 
     # Required parameters
