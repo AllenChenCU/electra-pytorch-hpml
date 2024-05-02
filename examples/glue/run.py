@@ -250,16 +250,18 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
         args.model_name_or_path,
         num_labels=num_labels,
         finetuning_task=args.task_name,
-        cache_dir=args.cache_dir if args.cache_dir else None,
+        #cache_dir=args.cache_dir if args.cache_dir else None,
+        cache_dir=False,
     )
     model = AutoModelForSequenceClassification.from_pretrained(
         args.model_name_or_path,
         from_tf=bool(".ckpt" in args.model_name_or_path),
         config=config,
-        cache_dir=args.cache_dir if args.cache_dir else None,
+        #cache_dir=args.cache_dir if args.cache_dir else None,
+        cache_dir=False,
         quantization_config=bnb_config, 
         #device_map="auto", #{"":0}, 
-        #torch_dtype=torch.bfloat16, 
+        torch_dtype=torch.bfloat16, 
     )
     #if args.finetune_method.lower() == "qlora":
         #model.gradient_checkpointing_enable()
@@ -285,8 +287,8 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
             modules_to_save=["classifier"], 
         )
         model.gradient_checkpointing_enable() # reduce number of stored activations
-        #model.enable_input_require_grads()
-        #model = prepare_model_for_kbit_training(model)
+        model.enable_input_require_grads()
+        model = prepare_model_for_kbit_training(model)
         model = get_peft_model(model, lora_config)
 
     tokenizer = wrap_tokenizer(new_tokenizer(args.vocab_path), pad_token='[PAD]')
