@@ -271,6 +271,7 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
     if args.finetune_method.lower() in ["lora", "qlora"]:
         for param in model.parameters():
             param.requires_grad = False
+            param.data = param.data.to(torch.float16)
             # if param.ndim == 1:
             #     # cast the small parameters (e.g. layernorm) to fp32 for stability
             #     param.data = param.data.to(torch.float32)
