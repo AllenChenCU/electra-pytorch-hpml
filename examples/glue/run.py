@@ -240,6 +240,7 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
             bnb_4bit_use_double_quant=True,
             bnb_4bit_quant_type="nf4", 
             bnb_4bit_compute_dtype=torch.bfloat16,
+            bnb_4bit_quant_storage=torch.bfloat16,
         )
     else:
         bnb_config = None
