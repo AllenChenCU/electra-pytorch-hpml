@@ -1,7 +1,7 @@
 
 # warmup
 python examples/glue/run.py \
-  --model_name_or_path bert-base-uncased \
+  --model_name_or_path google/electra-small-discriminator \
   --task_name MRPC \
   --do_train False \
   --do_eval True \
@@ -33,7 +33,7 @@ python examples/glue/run.py \
 
 # # Command for the original run
 python examples/glue/run.py \
-  --model_name_or_path bert-base-uncased \
+  --model_name_or_path google/electra-small-discriminator \
   --task_name MRPC \
   --do_train True \
   --do_eval True \
@@ -49,7 +49,7 @@ python examples/glue/run.py \
 
 # Command for the LoRA run
 python examples/glue/run.py \
-  --model_name_or_path bert-base-uncased \
+  --model_name_or_path google/electra-small-discriminator \
   --task_name MRPC \
   --do_train True \
   --do_eval True \
