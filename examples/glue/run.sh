@@ -10,7 +10,7 @@ python examples/glue/run.py \
   --max_seq_length 128 \
   --per_gpu_train_batch_size 32 \
   --learning_rate 2e-5 \
-  --num_train_epochs 10.0 \
+  --num_train_epochs 15.0 \
   --output_dir output/unfinetuned \
   --overwrite_output_dir True \
   --cache_dir electra_small_cache \
@@ -26,7 +26,7 @@ python examples/glue/run.py \
   --max_seq_length 128 \
   --per_gpu_train_batch_size 32 \
   --learning_rate 2e-5 \
-  --num_train_epochs 10.0 \
+  --num_train_epochs 15.0 \
   --output_dir output/original \
   --overwrite_output_dir True \
   --cache_dir electra_small_cache \
