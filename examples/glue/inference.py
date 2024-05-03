@@ -19,6 +19,7 @@ import os
 import logging
 import time
 import copy
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -135,22 +136,13 @@ def make_PTSQ_model(args, backend, model, train_dataloader):
 
     #backend = 'qnnpack'#"fbgemm"
     ptsq_model = copy.deepcopy(model)
-    ptsq_model.to(args.device)
-
     ptsq_model.eval()
 
     # prepare (inserting observer modules to record the data for quantizing activations)
     torch.backends.quantized.engine = backend
     ptsq_model.qconfig = torch.quantization.get_default_qconfig(backend)
-    attention_names = [f"electra.encoder.layer.{x}.attention.self" for x in range(12)]
-    for name, mod in ptsq_model.named_modules():
-        if isinstance(mod, torch.nn.Embedding):
-            #mod.qconfig = torch.ao.quantization.float_qparams_weight_only_qconfig
-            mod.qconfig = None # dont quantize the embeddings
-        if name in attention_names:
-            mod.qconfig = None
 
-    # add quantize input before layernorm layer
+    # Custom layers
     class CustomLayerNorm(nn.Module):
         def __init__(self, layernorm):
             super().__init__()
@@ -160,7 +152,48 @@ def make_PTSQ_model(args, backend, model, train_dataloader):
         def forward(self, input):
             x = self.quant(input)
             return self.layernorm(x)
+    
+    class CustomElectraSelfAttention(nn.Module):
+        def __init__(self, electra_self_attention):
+            super().__init__()
+            self.quant = torch.ao.quantization.QuantStub()
+            self.dequant = torch.ao.quantization.DeQuantStub()
+            self.electra_self_attention = electra_self_attention
+        
+        def forward(self, 
+            hidden_states: torch.Tensor,
+            attention_mask: Optional[torch.FloatTensor] = None,
+            head_mask: Optional[torch.FloatTensor] = None,
+            encoder_hidden_states: Optional[torch.FloatTensor] = None,
+            encoder_attention_mask: Optional[torch.FloatTensor] = None,
+            past_key_value: Optional[Tuple[Tuple[torch.FloatTensor]]] = None,
+            output_attentions: Optional[bool] = False,
+        ):
+            x = self.dequant(hidden_states)
+            x = self.electra_self_attention(
+                hidden_states=x, 
+                attention_mask=attention_mask, 
+                head_mask=head_mask, 
+                encoder_hidden_states=encoder_hidden_states, 
+                encoder_attention_mask=encoder_attention_mask, 
+                past_key_value=past_key_value, 
+                output_attentions=output_attentions, 
+            )
+            x = self.quant(x)
+            return x
+
     ptsq_model.electra.embeddings.LayerNorm = CustomLayerNorm(ptsq_model.electra.embeddings.LayerNorm)
+    for i in range(12):
+        ptsq_model.electra.encoder.layer[i].attention.self = CustomElectraSelfAttention(ptsq_model.electra.encoder.layer[i].attention.self)
+    
+    # Specify where not to quantize
+    attention_names = [f"electra.encoder.layer.{x}.attention.self" for x in range(12)]
+    for name, mod in ptsq_model.named_modules():
+        if isinstance(mod, torch.nn.Embedding):
+            #mod.qconfig = torch.ao.quantization.float_qparams_weight_only_qconfig
+            mod.qconfig = None
+        if name in attention_names:
+            mod.qconfig = None
 
     torch.quantization.prepare(ptsq_model, inplace=True)
 
