@@ -170,6 +170,7 @@ def make_PTSQ_model(args, backend, model, train_dataloader):
             output_attentions: Optional[bool] = False,
         ):
             x = self.dequant(hidden_states)
+            print("x hidden_states: ", x.dtype)
             x = self.electra_self_attention(
                 hidden_states=x, 
                 attention_mask=attention_mask, 
@@ -180,6 +181,7 @@ def make_PTSQ_model(args, backend, model, train_dataloader):
                 output_attentions=output_attentions, 
             )
             x = self.quant(x[0])
+            print("x after quantied: ", x.dtype)
             return (x,)
 
     ptsq_model.electra.embeddings.LayerNorm = CustomLayerNorm(ptsq_model.electra.embeddings.LayerNorm)
