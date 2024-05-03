@@ -22,6 +22,7 @@ import copy
 
 import numpy as np
 import torch
+from torch import nn
 from torch.utils.data import DataLoader, SequentialSampler
 from torch.profiler import profile, record_function, ProfilerActivity
 from tqdm import tqdm
@@ -143,7 +144,20 @@ def make_PTSQ_model(args, backend, model, train_dataloader):
     ptsq_model.qconfig = torch.quantization.get_default_qconfig(backend)
     for _, mod in ptsq_model.named_modules():
         if isinstance(mod, torch.nn.Embedding):
-            mod.qconfig = torch.ao.quantization.float_qparams_weight_only_qconfig
+            #mod.qconfig = torch.ao.quantization.float_qparams_weight_only_qconfig
+            mod.qconfig = None # dont quantize the embeddings
+
+    # add quantize input before layernorm layer
+    class CustomLayerNorm(nn.Module):
+        def __init__(self, layernorm):
+            super().__init__()
+            self.quant = torch.ao.quantization.QuantStub()
+            self.layernorm = layernorm
+        
+        def forward(self, input):
+            x = self.quant(input)
+            return self.layernorm(x)
+    ptsq_model.electra.embeddings.LayerNorm = CustomLayerNorm(ptsq_model.electra.embeddings.LayerNorm)
 
     torch.quantization.prepare(ptsq_model, inplace=True)
 
