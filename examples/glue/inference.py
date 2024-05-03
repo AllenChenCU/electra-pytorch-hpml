@@ -179,8 +179,8 @@ def make_PTSQ_model(args, backend, model, train_dataloader):
                 past_key_value=past_key_value, 
                 output_attentions=output_attentions, 
             )
-            x = self.quant(x)
-            return x
+            x = self.quant(x[0])
+            return (x,)
 
     ptsq_model.electra.embeddings.LayerNorm = CustomLayerNorm(ptsq_model.electra.embeddings.LayerNorm)
     for i in range(12):
