@@ -344,6 +344,7 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
     if args.quantization_method == "ptsq":
         logger.info("PTSQ: Quantizing the network for inferencing... ")
         backend = "fbgemm" #'qnnpack'
+        args.device = "cpu" # Quantization with pytorch runs on CPU only for now. Pytorh quantization support is in development
         args.train_batch_size = args.per_gpu_train_batch_size * max(1, args.n_gpu)
         train_sampler = RandomSampler(train_dataset) if args.local_rank == -1 else DistributedSampler(train_dataset)
         train_dataloader = DataLoader(train_dataset, sampler=train_sampler, batch_size=args.train_batch_size)

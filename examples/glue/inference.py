@@ -134,6 +134,7 @@ def make_PTSQ_model(args, backend, model, train_dataloader):
 
     #backend = 'qnnpack'#"fbgemm"
     ptsq_model = copy.deepcopy(model)
+    ptsq_model.to(args.device)
 
     ptsq_model.eval()
 
