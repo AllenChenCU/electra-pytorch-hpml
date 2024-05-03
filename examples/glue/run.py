@@ -376,7 +376,7 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
             #     lora_params = {n: p for n, p in model.named_parameters() if "lora_B" in n}
             #     for n, p in lora_params.items():
             #         print(n, p.any())
-            #model.to(args.device)
+            model.to(args.device)
             result = evaluate(args, model, tokenizer, prefix=prefix)
             result = dict((k + "_{}".format(global_step), v) for k, v in result.items())
             results.update(result)

@@ -129,6 +129,34 @@ def evaluate(args, model, tokenizer, prefix=""):
     return results
 
 
+class CustomElectraIntermediate(nn.Module):
+    def __init__(self, electra_intermediate):
+        super().__init__()
+        self.quant = torch.ao.quantization.QuantStub()
+        self.dequant = torch.ao.quantization.DeQuantStub()
+        self.electra_intermediate = electra_intermediate
+    
+    def forward(self, hidden_states: torch.Tensor) -> torch.Tensor:
+        x = self.quant(hidden_states)
+        x = self.electra_intermediate(x)
+        x = self.dequant(x)
+        return x
+    
+
+class CustomElectraClassificationHead(nn.Module):
+    def __init__(self, electra_classification_head):
+        super().__init__()
+        self.quant = torch.ao.quantization.QuantStub()
+        self.dequant = torch.ao.quantization.DeQuantStub()
+        self.electra_classification_head = electra_classification_head
+
+    def forward(self, features, **kwargs):
+        x = self.quant(features)
+        x = self.electra_classification_head(x)
+        x = self.dequant(x)
+        return x
+
+
 def make_PTSQ_model(args, backend, model, train_dataloader):
     """Post-training Static Quantization for efficient inferencing
     model: this input is trained
@@ -142,59 +170,24 @@ def make_PTSQ_model(args, backend, model, train_dataloader):
     torch.backends.quantized.engine = backend
     ptsq_model.qconfig = torch.quantization.get_default_qconfig(backend)
 
-    # Custom layers
-    class CustomLayerNorm(nn.Module):
-        def __init__(self, layernorm):
-            super().__init__()
-            self.quant = torch.ao.quantization.QuantStub()
-            self.layernorm = layernorm
-        
-        def forward(self, input):
-            x = self.quant(input)
-            return self.layernorm(x)
-    
-    class CustomElectraSelfAttention(nn.Module):
-        def __init__(self, electra_self_attention):
-            super().__init__()
-            self.quant = torch.ao.quantization.QuantStub()
-            self.dequant = torch.ao.quantization.DeQuantStub()
-            self.electra_self_attention = electra_self_attention
-        
-        def forward(self, 
-            hidden_states: torch.Tensor,
-            attention_mask: Optional[torch.FloatTensor] = None,
-            head_mask: Optional[torch.FloatTensor] = None,
-            encoder_hidden_states: Optional[torch.FloatTensor] = None,
-            encoder_attention_mask: Optional[torch.FloatTensor] = None,
-            past_key_value: Optional[Tuple[Tuple[torch.FloatTensor]]] = None,
-            output_attentions: Optional[bool] = False,
-        ):
-            x = self.dequant(hidden_states)
-            print("x hidden_states: ", x.dtype)
-            x = self.electra_self_attention(
-                hidden_states=x, 
-                attention_mask=attention_mask, 
-                head_mask=head_mask, 
-                encoder_hidden_states=encoder_hidden_states, 
-                encoder_attention_mask=encoder_attention_mask, 
-                past_key_value=past_key_value, 
-                output_attentions=output_attentions, 
-            )
-            x = self.quant(x[0])
-            print("x after quantied: ", x.dtype)
-            return (x,)
-
-    ptsq_model.electra.embeddings.LayerNorm = CustomLayerNorm(ptsq_model.electra.embeddings.LayerNorm)
+    # Insert/replace Custom layers
+    # ptsq_model.electra.embeddings.LayerNorm = CustomLayerNorm(ptsq_model.electra.embeddings.LayerNorm)
     for i in range(12):
-        ptsq_model.electra.encoder.layer[i].attention.self = CustomElectraSelfAttention(ptsq_model.electra.encoder.layer[i].attention.self)
+        ptsq_model.electra.encoder.layer[i].intermediate = CustomElectraIntermediate(ptsq_model.electra.encoder.layer[i].intermediate)
+    ptsq_model.classifier = CustomElectraClassificationHead(ptsq_model.classifier)
     
     # Specify where not to quantize
-    attention_names = [f"electra.encoder.layer.{x}.attention.self" for x in range(12)]
+    attention_names = [f"electra.encoder.layer.{x}.attention" for x in range(12)]
+    output_names = [f"electra.encoder.layer.{x}.output" for x in range(12)]
     for name, mod in ptsq_model.named_modules():
-        if isinstance(mod, torch.nn.Embedding):
+        if name == "electra.embeddings": #isinstance(mod, torch.nn.Embedding):
             #mod.qconfig = torch.ao.quantization.float_qparams_weight_only_qconfig
             mod.qconfig = None
         if name in attention_names:
+            mod.qconfig = None
+        if name in output_names:
+            mod.qconfig = None
+        if name == "electra.embeddings_project":
             mod.qconfig = None
 
     torch.quantization.prepare(ptsq_model, inplace=True)
