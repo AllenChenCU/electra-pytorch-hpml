@@ -42,7 +42,8 @@ from processors import glue_processors as processors
 from processors import glue_tasks_num_labels as task_num_labels
 from finetune_utils import set_seed, wrap_tokenizer, load_and_cache_examples, log_trainable_parameters, log_gpu_memory, calc_model_size
 from finetune import train
-from inference import evaluate, make_PTSQ_model
+from inference import evaluate
+from quantization import make_PTSQ_model, prepare_qat_model
 
 
 logger = logging.getLogger(__name__)
@@ -305,6 +306,13 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
     logger.info("Model Size: ")
     calc_model_size(model)
 
+    # Prepare QAT model
+    if args.quantization_method == "qat":
+        logger.info("QAT: Preparing model for quantized-aware training...")
+        backend = "fbgemm" #'qnnpack'
+        model = prepare_qat_model(backend, model)
+        #args.device = "cpu" # Quantization with pytorch runs on CPU only for now. Pytorh quantization support is in development
+        #model.to(args.device)
     ###################################################################################################
     # Finetune
     ###################################################################################################
@@ -345,8 +353,17 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
     # Inference
     ###################################################################################################
     if args.inference_on_cpu:
+        logger.info("Inferencing on CPU: ")
         args.device = "cpu"
         model.to(args.device)
+    if args.quantization_method == "qat":
+        logger.info("QAT: Converting the model to the quantized version...")
+        args.device = "cpu" # Quantization with pytorch runs on CPU only for now. Pytorh quantization support is in development
+        model.to(args.device)
+        model.eval()
+        torch.quantization.convert(model, inplace=True)
+        logger.info("Model Size after converting to quantized-awared model: ")
+        calc_model_size(model)
     if args.quantization_method == "ptsq":
         logger.info("PTSQ: Quantizing the network for inferencing... ")
         backend = "fbgemm" #'qnnpack'
