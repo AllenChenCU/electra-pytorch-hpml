@@ -24,9 +24,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import TensorDataset
-from processors import glue_convert_examples_to_features as convert_examples_to_features
-from processors import glue_output_modes as output_modes
-from processors import glue_processors as processors
+from examples.glue.processors import glue_convert_examples_to_features as convert_examples_to_features
+from examples.glue.processors import glue_output_modes as output_modes
+from examples.glue.processors import glue_processors as processors
 
 
 logger = logging.getLogger(__name__)

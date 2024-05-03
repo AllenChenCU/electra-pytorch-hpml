@@ -42,7 +42,7 @@ from processors import glue_processors as processors
 from processors import glue_tasks_num_labels as task_num_labels
 from finetune_utils import set_seed, wrap_tokenizer, load_and_cache_examples, log_trainable_parameters, log_gpu_memory
 from finetune import train
-from inference import evaluate
+from inference import evaluate, make_PTSQ_model
 
 
 logger = logging.getLogger(__name__)
@@ -168,6 +168,7 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
     parser.add_argument("--server_ip", type=str, default="", help="For distant debugging.")
     parser.add_argument("--server_port", type=str, default="", help="For distant debugging.")
     parser.add_argument("--finetune_method", type=str, default="original", help="Finetune methodologies: original, lora, or qlora")
+    parser.add_argument("--quantization_method", type=str, default="original", help="Quantization methodologies: original, ptsq, or qat")
     args = parser.parse_args()
 
     ###################################################################################################
@@ -270,7 +271,7 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
         # Freeze the weights of original model 
         for param in model.parameters():
             #param.requires_grad = False
-            param.data = param.data.to(torch.float32)
+            param.data = param.data.to(torch.float16)
 
         lora_config = LoraConfig(
             task_type=TaskType.SEQ_CLS,
@@ -340,6 +341,13 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
     ###################################################################################################
     # Inference
     ###################################################################################################
+    if args.quantization_method == "ptsq":
+        logger.info("PTSQ: Quantizing the network for inferencing... ")
+        backend = "fbgemm" #'qnnpack'
+        args.train_batch_size = args.per_gpu_train_batch_size * max(1, args.n_gpu)
+        train_sampler = RandomSampler(train_dataset) if args.local_rank == -1 else DistributedSampler(train_dataset)
+        train_dataloader = DataLoader(train_dataset, sampler=train_sampler, batch_size=args.train_batch_size)
+        model = make_PTSQ_model(args, backend, model, train_dataloader)
     results = {}
     if args.do_eval and args.local_rank in [-1, 0]:
         # tokenizer = AutoTokenizer.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)

@@ -18,6 +18,7 @@
 import os
 import logging
 import time
+import copy
 
 import numpy as np
 import torch
@@ -124,3 +125,41 @@ def evaluate(args, model, tokenizer, prefix=""):
     logger.info(f"Total Dataload Time on Testing Dataset: {dataload_time.sum} seconds")
     logger.info(f"Eval Avg Loss: {eval_loss}")
     return results
+
+
+def make_PTSQ_model(args, backend, model, train_dataloader):
+    """Post-training Static Quantization for efficient inferencing
+    model: this input is trained
+    """
+
+    #backend = 'qnnpack'#"fbgemm"
+    ptsq_model = copy.deepcopy(model)
+
+    ptsq_model.eval()
+
+    # prepare (inserting observer modules to record the data for quantizing activations)
+    torch.backends.quantized.engine = backend
+    ptsq_model.qconfig = torch.quantization.get_default_qconfig(backend)
+    for _, mod in ptsq_model.named_modules():
+        if isinstance(mod, torch.nn.Embedding):
+            mod.qconfig = torch.ao.quantization.float_qparams_weight_only_qconfig
+
+    torch.quantization.prepare(ptsq_model, inplace=True)
+
+    # calibrate
+    with torch.inference_mode():
+        for batch in train_dataloader:
+            batch = tuple(t.to(args.device) for t in batch)
+            inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3]}
+            inputs["token_type_ids"] = (
+                batch[2] if args.model_type in ["bert", "xlnet", "albert"] else None
+            )  # XLM, DistilBERT, RoBERTa, and XLM-RoBERTa don't use segment_ids
+            outputs = ptsq_model(**inputs)
+            loss = outputs[0]
+
+    # convert
+    torch.quantization.convert(ptsq_model, inplace=True)
+
+    # check
+    print(ptsq_model)
+    return ptsq_model

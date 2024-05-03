@@ -19,7 +19,7 @@ import logging
 import os
 
 # from ...file_utils import is_tf_available
-from utils import DataProcessor, InputExample, InputFeatures
+from examples.glue.utils import DataProcessor, InputExample, InputFeatures
 
 is_tf_available = lambda: False
 
