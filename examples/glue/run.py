@@ -169,6 +169,7 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
     parser.add_argument("--server_port", type=str, default="", help="For distant debugging.")
     parser.add_argument("--finetune_method", type=str, default="original", help="Finetune methodologies: original, lora, or qlora")
     parser.add_argument("--quantization_method", type=str, default="original", help="Quantization methodologies: original, ptsq, or qat")
+    parser.add_argument("--inference_on_cpu", default=False, type=ast.literal_eval, help="Whether to run inference on CPU")
     args = parser.parse_args()
 
     ###################################################################################################
@@ -343,6 +344,9 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
     ###################################################################################################
     # Inference
     ###################################################################################################
+    if args.inference_on_cpu:
+        args.device = "cpu"
+        model.to(args.device)
     if args.quantization_method == "ptsq":
         logger.info("PTSQ: Quantizing the network for inferencing... ")
         backend = "fbgemm" #'qnnpack'
