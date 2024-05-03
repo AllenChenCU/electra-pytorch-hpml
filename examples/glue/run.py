@@ -40,7 +40,7 @@ from processors import glue_convert_examples_to_features as convert_examples_to_
 from processors import glue_output_modes as output_modes
 from processors import glue_processors as processors
 from processors import glue_tasks_num_labels as task_num_labels
-from finetune_utils import set_seed, wrap_tokenizer, load_and_cache_examples, log_trainable_parameters, log_gpu_memory
+from finetune_utils import set_seed, wrap_tokenizer, load_and_cache_examples, log_trainable_parameters, log_gpu_memory, calc_model_size
 from finetune import train
 from inference import evaluate, make_PTSQ_model
 
@@ -301,6 +301,8 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
     log_trainable_parameters(model)
     logger.info("Before training: only model is loaded into GPU")
     log_gpu_memory()
+    logger.info("Model Size: ")
+    calc_model_size(model)
 
     ###################################################################################################
     # Finetune
@@ -350,6 +352,8 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
         train_sampler = RandomSampler(train_dataset) if args.local_rank == -1 else DistributedSampler(train_dataset)
         train_dataloader = DataLoader(train_dataset, sampler=train_sampler, batch_size=args.train_batch_size)
         model = make_PTSQ_model(args, backend, model, train_dataloader)
+        logger.info("Model Size after prepared for PTSQ: ")
+        calc_model_size(model)
     results = {}
     if args.do_eval and args.local_rank in [-1, 0]:
         # tokenizer = AutoTokenizer.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)
