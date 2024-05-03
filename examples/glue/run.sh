@@ -1,6 +1,6 @@
 
 # warmup
-python examples/glue/run.py \
+python3 examples/glue/run.py \
   --model_name_or_path google/electra-small-discriminator \
   --task_name MRPC \
   --do_train False \
@@ -17,7 +17,7 @@ python examples/glue/run.py \
   --quantization_method original
 
 # # un-finetuned
-# python examples/glue/run.py \
+# python3 examples/glue/run.py \
 #   --model_name_or_path google/electra-small-discriminator \
 #   --task_name MRPC \
 #   --do_train False \
@@ -34,7 +34,7 @@ python examples/glue/run.py \
 #   --quantization_method original
 
 # # Command for the original run
-# python examples/glue/run.py \
+# python3 examples/glue/run.py \
 #   --model_name_or_path google/electra-small-discriminator \
 #   --task_name MRPC \
 #   --do_train True \
@@ -51,7 +51,7 @@ python examples/glue/run.py \
 #   --quantization_method original 
 
 # # Command for the LoRA run
-# python examples/glue/run.py \
+# python3 examples/glue/run.py \
 #   --model_name_or_path google/electra-small-discriminator \
 #   --task_name MRPC \
 #   --do_train True \
@@ -70,7 +70,7 @@ python examples/glue/run.py \
 
 # Command for the QLoRA run
 #bert-base-uncased
-# python examples/glue/run.py \
+# python3 examples/glue/run.py \
 #   --model_name_or_path google/electra-small-discriminator \
 #   --task_name MRPC \
 #   --do_train True \
@@ -88,7 +88,44 @@ python examples/glue/run.py \
 
 
 # Command for the inference run on CPU
-python examples/glue/run.py \
+# python3 examples/glue/run.py \
+#   --model_name_or_path google/electra-small-discriminator \
+#   --task_name MRPC \
+#   --do_train True \
+#   --do_eval True \
+#   --data_dir data/glue_data/MRPC \
+#   --max_seq_length 128 \
+#   --per_gpu_train_batch_size 32 \
+#   --learning_rate 2e-5 \
+#   --num_train_epochs 20.0 \
+#   --output_dir output/inference_on_cpu \
+#   --overwrite_output_dir True \
+#   --cache_dir electra_small_cache \
+#   --finetune_method original \
+#   --quantization_method original \
+#   --inference_on_cpu True
+
+
+# # Command for the PTSQ run
+# python3 examples/glue/run.py \
+#   --model_name_or_path google/electra-small-discriminator \
+#   --task_name MRPC \
+#   --do_train True \
+#   --do_eval True \
+#   --data_dir data/glue_data/MRPC \
+#   --max_seq_length 128 \
+#   --per_gpu_train_batch_size 32 \
+#   --learning_rate 2e-5 \
+#   --num_train_epochs 20.0 \
+#   --output_dir output/ptsq \
+#   --overwrite_output_dir True \
+#   --cache_dir electra_small_cache \
+#   --finetune_method original \
+#   --quantization_method ptsq
+
+
+# Command for the QAT run
+python3 examples/glue/run.py \
   --model_name_or_path google/electra-small-discriminator \
   --task_name MRPC \
   --do_train True \
@@ -98,27 +135,8 @@ python examples/glue/run.py \
   --per_gpu_train_batch_size 32 \
   --learning_rate 2e-5 \
   --num_train_epochs 20.0 \
-  --output_dir output/inference_on_cpu \
+  --output_dir output/qat \
   --overwrite_output_dir True \
   --cache_dir electra_small_cache \
   --finetune_method original \
-  --quantization_method original \
-  --inference_on_cpu True
-
-
-# Command for the PTSQ run
-python examples/glue/run.py \
-  --model_name_or_path google/electra-small-discriminator \
-  --task_name MRPC \
-  --do_train True \
-  --do_eval True \
-  --data_dir data/glue_data/MRPC \
-  --max_seq_length 128 \
-  --per_gpu_train_batch_size 32 \
-  --learning_rate 2e-5 \
-  --num_train_epochs 20.0 \
-  --output_dir output/ptsq \
-  --overwrite_output_dir True \
-  --cache_dir electra_small_cache \
-  --finetune_method original \
-  --quantization_method ptsq
+  --quantization_method qat
