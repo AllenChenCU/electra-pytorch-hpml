@@ -143,7 +143,7 @@ def make_PTSQ_model(args, backend, model, train_dataloader):
     torch.backends.quantized.engine = backend
     ptsq_model.qconfig = torch.quantization.get_default_qconfig(backend)
     attention_names = [f"electra.encoder.layer.{x}.attention.self" for x in range(12)]
-    for _, mod in ptsq_model.named_modules():
+    for name, mod in ptsq_model.named_modules():
         if isinstance(mod, torch.nn.Embedding):
             #mod.qconfig = torch.ao.quantization.float_qparams_weight_only_qconfig
             mod.qconfig = None # dont quantize the embeddings
