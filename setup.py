@@ -25,6 +25,7 @@ setup(
     'peft', 
     'bitsandbytes', 
     'accelerate', 
+    'wandb'
   ],
   setup_requires=[
     'pytest-runner'

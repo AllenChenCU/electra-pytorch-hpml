@@ -19,6 +19,7 @@ import logging
 import os
 import json
 import time
+import wandb
 
 from tqdm import tqdm, trange
 import torch
@@ -245,8 +246,16 @@ def train(args, train_dataset, model, tokenizer):
             train_iterator.close()
             break
     
-    logger.info(f"Total Time per epoch: {batch_time.sum}/{args.num_train_epochs} = {batch_time.sum/args.num_train_epochs} seconds")
-    logger.info(f"Total Dataload Time per epoch: {dataload_time.sum}/{args.num_train_epochs} = {dataload_time.sum/args.num_train_epochs} seconds")
-    logger.info(f"Total Finetune Time per epoch: {finetune_time.sum}/{args.num_train_epochs} = {finetune_time.sum/args.num_train_epochs} seconds")
+    total_time_per_epoch = batch_time.sum/args.num_train_epochs
+    dataload_time_per_epoch = dataload_time.sum/args.num_train_epochs
+    total_finetune_time_per_epoch = finetune_time.sum/args.num_train_epochs
+    logger.info(f"Total Time per epoch: {batch_time.sum}/{args.num_train_epochs} = {total_time_per_epoch} seconds")
+    logger.info(f"Total Dataload Time per epoch: {dataload_time.sum}/{args.num_train_epochs} = {dataload_time_per_epoch} seconds")
+    logger.info(f"Total Finetune Time per epoch: {finetune_time.sum}/{args.num_train_epochs} = {total_finetune_time_per_epoch} seconds")
+    wandb.log({
+        "total_time_per_epoch": total_time_per_epoch, 
+        "dataload_time_per_epoch": dataload_time_per_epoch, 
+        "total_finetune_time_per_epoch": total_finetune_time_per_epoch, 
+    })
 
     return global_step, tr_loss / global_step

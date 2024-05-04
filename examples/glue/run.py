@@ -34,6 +34,7 @@ from torch.nn.utils import prune
 from tqdm import tqdm, trange
 from transformers import AutoConfig, AutoModelForSequenceClassification, BitsAndBytesConfig
 from peft import LoraConfig, get_peft_model, TaskType, PeftModel, prepare_model_for_kbit_training
+import wandb
 
 from pretraining.openwebtext.dataset import new_tokenizer
 from metrics import glue_compute_metrics as compute_metrics
@@ -195,6 +196,12 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
                 args.output_dir
             )
         )
+    
+    # setup wandb
+    wandb.init(
+        project=args.output_dir.split("/")[1], 
+        config=vars(args)
+    )
 
     # Setup distant debugging if needed
     if args.server_ip and args.server_port:
@@ -440,6 +447,8 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
             results.update(result)
             logger.info("After eval:")
             log_gpu_memory()
+
+    wandb.finish()
 
     return results
 

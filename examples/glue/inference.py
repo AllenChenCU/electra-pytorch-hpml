@@ -27,6 +27,7 @@ from torch import nn
 from torch.utils.data import DataLoader, SequentialSampler
 from torch.profiler import profile, record_function, ProfilerActivity
 from tqdm import tqdm
+import wandb
 
 from metrics import glue_compute_metrics as compute_metrics
 from finetune_utils import load_and_cache_examples, AverageMeter
@@ -122,8 +123,17 @@ def evaluate(args, model, tokenizer, prefix=""):
             for key in sorted(result.keys()):
                 logger.info("  %s = %s", key, str(result[key]))
                 writer.write("%s = %s\n" % (key, str(result[key])))
+        wandb.log({
+            "acc": result["acc"], 
+            "f1": result["f1"], 
+            "acc_and_f1": result["acc_and_f1"], 
+            "total_testing_time_per_epoch": batch_time.sum, 
+            "dataload_time_per_epoch": dataload_time.sum, 
+            "eval_avg_loss": eval_loss,
+        })
 
     logger.info(f"Total Time on Testing Dataset: {batch_time.sum} seconds")
     logger.info(f"Total Dataload Time on Testing Dataset: {dataload_time.sum} seconds")
     logger.info(f"Eval Avg Loss: {eval_loss}")
+
     return results
