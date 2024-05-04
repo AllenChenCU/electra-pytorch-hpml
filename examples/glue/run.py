@@ -30,6 +30,7 @@ import torch.nn as nn
 from torch.optim import AdamW
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
 from torch.utils.data.distributed import DistributedSampler
+from torch.nn.utils import prune
 from tqdm import tqdm, trange
 from transformers import AutoConfig, AutoModelForSequenceClassification, BitsAndBytesConfig
 from peft import LoraConfig, get_peft_model, TaskType, PeftModel, prepare_model_for_kbit_training
@@ -44,6 +45,7 @@ from finetune_utils import set_seed, wrap_tokenizer, load_and_cache_examples, lo
 from finetune import train
 from inference import evaluate
 from quantization import make_PTSQ_model, prepare_qat_model
+from prune import get_params_to_prune, unstructured_prune_global, unstructured_prune_layer, structured_prune_layer
 
 
 logger = logging.getLogger(__name__)
@@ -171,6 +173,12 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
     parser.add_argument("--finetune_method", type=str, default="original", help="Finetune methodologies: original, lora, or qlora")
     parser.add_argument("--quantization_method", type=str, default="original", help="Quantization methodologies: original, ptsq, or qat")
     parser.add_argument("--inference_on_cpu", default=False, type=ast.literal_eval, help="Whether to run inference on CPU")
+    parser.add_argument("--prune", default=False, type=ast.literal_eval, help="whether to prune")
+    parser.add_argument("--prune_structure_type", default="unstructured", type=str, help="unstructured or structured pruning")
+    parser.add_argument("--prune_global", default=False, type=ast.literal_eval, help="prune global or layer")
+    parser.add_argument("--prune_criterion", default="random", type=str, help="l1, l2 or random criterion")
+    parser.add_argument("--prune_amount", default=0.25, type=float, help="Amount of pruning")
+    parser.add_argument("--prune_dim", default=0, type=int, help="pruning dimension (0 or 1)")
     args = parser.parse_args()
 
     ###################################################################################################
@@ -313,6 +321,31 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
         model = prepare_qat_model(backend, model)
         #args.device = "cpu" # Quantization with pytorch runs on CPU only for now. Pytorh quantization support is in development
         #model.to(args.device)
+    
+    # Prepare for pruning
+    if args.prune:
+        logger.info(
+            f"Pruning: {args.prune_structure_type} {args.prune_criterion} \
+            (Global: {args.prune_global}, \
+            Amount: {args.prune_amount}, \
+            Dim: {args.dim})..."
+        )
+        params_to_prune = get_params_to_prune(model)
+        if args.prune_structure_type == "unstructured":
+            if args.prune_global:
+                if args.prune_criterion == "random":
+                    pruning_method = prune.RandomUnstructured
+                else:
+                    pruning_method = prune.L1Unstructured
+                unstructured_prune_global(params_to_prune, pruning_method=pruning_method, amount=args.prune_amount)
+            else:
+                unstructured_prune_layer(params_to_prune, args.prune_amount)
+        else:
+            if args.prune_criterion == "l1":
+                n = 1
+            else:
+                n = 2
+            structured_prune_layer(params_to_prune, args.prune_amount, n=n, dim=args.prune_dim)
     ###################################################################################################
     # Finetune
     ###################################################################################################
