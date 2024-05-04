@@ -328,7 +328,7 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
             f"Pruning: {args.prune_structure_type} {args.prune_criterion} \
             (Global: {args.prune_global}, \
             Amount: {args.prune_amount}, \
-            Dim: {args.dim})..."
+            Dim: {args.prune_dim})..."
         )
         params_to_prune = get_params_to_prune(model)
         if args.prune_structure_type == "unstructured":
