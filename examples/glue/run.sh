@@ -306,53 +306,53 @@ python3 examples/glue/run.py \
 #   --prune_amount 0.25 \
 #   --prune_dim 1
 
-# Tuning the prune amount
-# Unstructured layer l1 @35
-python3 examples/glue/run.py \
-  --model_name_or_path google/electra-small-discriminator \
-  --task_name MRPC \
-  --do_train True \
-  --do_eval True \
-  --data_dir data/glue_data/MRPC \
-  --max_seq_length 128 \
-  --per_gpu_train_batch_size 32 \
-  --learning_rate 2e-5 \
-  --num_train_epochs 20.0 \
-  --output_dir output/unstructured_l_l1_35 \
-  --overwrite_output_dir True \
-  --cache_dir electra_small_cache \
-  --finetune_method original \
-  --quantization_method original \
-  --prune True \
-  --prune_structure_type unstructured \
-  --prune_global False \
-  --prune_criterion l1 \
-  --prune_amount 0.35 \
-  --prune_dim 0
+# # Tuning the prune amount
+# # Unstructured layer l1 @35
+# python3 examples/glue/run.py \
+#   --model_name_or_path google/electra-small-discriminator \
+#   --task_name MRPC \
+#   --do_train True \
+#   --do_eval True \
+#   --data_dir data/glue_data/MRPC \
+#   --max_seq_length 128 \
+#   --per_gpu_train_batch_size 32 \
+#   --learning_rate 2e-5 \
+#   --num_train_epochs 20.0 \
+#   --output_dir output/unstructured_l_l1_35 \
+#   --overwrite_output_dir True \
+#   --cache_dir electra_small_cache \
+#   --finetune_method original \
+#   --quantization_method original \
+#   --prune True \
+#   --prune_structure_type unstructured \
+#   --prune_global False \
+#   --prune_criterion l1 \
+#   --prune_amount 0.35 \
+#   --prune_dim 0
 
 
-# Unstructured layer l1 @45
-python3 examples/glue/run.py \
-  --model_name_or_path google/electra-small-discriminator \
-  --task_name MRPC \
-  --do_train True \
-  --do_eval True \
-  --data_dir data/glue_data/MRPC \
-  --max_seq_length 128 \
-  --per_gpu_train_batch_size 32 \
-  --learning_rate 2e-5 \
-  --num_train_epochs 20.0 \
-  --output_dir output/unstructured_l_l1_45 \
-  --overwrite_output_dir True \
-  --cache_dir electra_small_cache \
-  --finetune_method original \
-  --quantization_method original \
-  --prune True \
-  --prune_structure_type unstructured \
-  --prune_global False \
-  --prune_criterion l1 \
-  --prune_amount 0.45 \
-  --prune_dim 0
+# # Unstructured layer l1 @45
+# python3 examples/glue/run.py \
+#   --model_name_or_path google/electra-small-discriminator \
+#   --task_name MRPC \
+#   --do_train True \
+#   --do_eval True \
+#   --data_dir data/glue_data/MRPC \
+#   --max_seq_length 128 \
+#   --per_gpu_train_batch_size 32 \
+#   --learning_rate 2e-5 \
+#   --num_train_epochs 20.0 \
+#   --output_dir output/unstructured_l_l1_45 \
+#   --overwrite_output_dir True \
+#   --cache_dir electra_small_cache \
+#   --finetune_method original \
+#   --quantization_method original \
+#   --prune True \
+#   --prune_structure_type unstructured \
+#   --prune_global False \
+#   --prune_criterion l1 \
+#   --prune_amount 0.45 \
+#   --prune_dim 0
 
 
 # Unstructured layer l1 @55
