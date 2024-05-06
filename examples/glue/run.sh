@@ -307,7 +307,7 @@ python3 examples/glue/run.py \
 #   --prune_dim 1
 
 # Tuning the prune amount
-max_prune_amt = 65
+max_prune_amt=65
 for ((i=25; i<=max_prune_amt; i+=10)); do
   output_dir="output/unstructured_l_l1_$i"
   # Unstructured layer l1 @ prune amt i
