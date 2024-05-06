@@ -310,7 +310,8 @@ python3 examples/glue/run.py \
 max_prune_amt=65
 for ((i=25; i<=max_prune_amt; i+=10)); do
   output_dir="output/unstructured_l_l1_$i"
-  # Unstructured layer l1 @ prune amt i
+  prune_amt=$((0.01*i))
+  # Unstructured layer l1 @ prune amt
   python3 examples/glue/run.py \
     --model_name_or_path google/electra-small-discriminator \
     --task_name MRPC \
@@ -330,6 +331,6 @@ for ((i=25; i<=max_prune_amt; i+=10)); do
     --prune_structure_type unstructured \
     --prune_global False \
     --prune_criterion l1 \
-    --prune_amount $((0.01 * i)) \
+    --prune_amount $prune_amt \
     --prune_dim 0
 done
