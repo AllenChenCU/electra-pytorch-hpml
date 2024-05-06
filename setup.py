@@ -25,7 +25,8 @@ setup(
     'peft', 
     'bitsandbytes', 
     'accelerate', 
-    'wandb'
+    'wandb', 
+    'matplotlib', 
   ],
   setup_requires=[
     'pytest-runner'
