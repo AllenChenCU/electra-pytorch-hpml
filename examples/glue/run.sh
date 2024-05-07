@@ -71,7 +71,7 @@ max_lora_rank=128
 max_lora_scale=2
 for((scale=1; scale<=max_lora_scale; scale+=1)); do
   for ((rank=16; rank<=max_lora_rank; rank*=2)); do
-    output_dir="output/lora_$rank_$scale"
+    output_dir="output/lora_${rank}_${scale}"
     python3 examples/glue/run.py \
       --model_name_or_path google/electra-small-discriminator \
       --task_name MRPC \
