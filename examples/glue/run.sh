@@ -89,6 +89,7 @@ for((scale=1; scale<=max_lora_scale; scale+=1)); do
       --quantization_method original \
       --lora_rank $rank \
       --lora_scale $scale 
+  done
 done
 
 
