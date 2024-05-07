@@ -1,4 +1,4 @@
-# Efficient Fine-tuning and Inferencing of Electra 
+# Efficient Fine-tuning and Inferencing of ELECTRA 
 
 - Branch Author: Allen Chen
 - UNI #: atc2160
@@ -67,7 +67,7 @@ mkdir output
 # To run all experiments
 ./examples/glue/run.sh
 
-# Example command: an original run with fine-tuning and evalating but without any optimization techniques applied
+# Example command: an original run with fine-tuning and evaluating but without any optimization techniques applied
 python3 examples/glue/run.py \
   --model_name_or_path google/electra-small-discriminator \
   --task_name MRPC \
@@ -90,12 +90,22 @@ python3 examples/glue/run.py \
 ### LoRA Results
 ![LoRA Results](images/lora_results.png?raw=true)
 
+ELECTRA with LoRA maintains the original performance while using only 9.2% of total trainable parameters from the original model. However, the performance for the model with QLoRA drops significantly as the addition of 4-bit quantization introduces more errors. One interesting observation is that the fine-tune and inference time for ELECTRA with LoRA are slower than those of the original model. This is different from what we expect as reducing the number of trainable parameters does not lower or maintain the computation time.
+
+![Tuning Rank and Alpha parameters](images/tuning_rank_and_alpha.png?raw=true)
+
+The performance at rank 128 and alpha 256 is only slightly higher than the performance at rank 64 and alpha 64 or 128. We conclude that this slight improvement does not warrant an sizable increase in trainable parameters, so we choose rank 64 and alpha 64 for the reported ELECTRA with LoRA. We further reason that the sub-task and the pre-trained model are equally important as both tasks train to improve its general natural language understanding without focusing on a specific domain. We then select the value of 64 for Alpha. The rank is relatively high because ELECTRA is a relatively smaller model, still requiring a decent number of trainable parameters to perform well.
+
 ### Quantization Results
 ![Quantization Results](images/quantization_results.png?raw=true)
 
-![Tuning Rank and Alpha parameters](images/tuning_rank_and_alpha.png?raw=true)
+Both PTSQ and QAT have a smaller model size and achieve slightly faster inference time while losing just a bit of accuracies and f1 scores. However, it is surprising to see PTSQ and QAT achieve the same performance as we expect QAT to yield higher accuracies.
 
 ### Pruning Results
 ![Pruning Results](images/pruning_results.png?raw=true)
 
+Overall, Prune method number 2 and 3 outperform the rest of the methods and maintain the same accuracies and f1-scores. These results show that Unstructured pruning with L1 pruning criteria is more effective for the linear layers in ELECTRA. On the other hand, we see poor performances across runs with structured pruning along both dimensions. 
+
 ![Tuning prune rate](images/tuning_prune_rate.png?raw=true)
+
+Previously all models are pruned at a pruning amount of 25 percent. Now we take the best performing model, which uses unstructured prune-by-layer pruning strategy with L1 criterion, and tune on its pruning amount. After the model was pruned at 35 percent, the performance decreased rapidly. We conclude that the pruning amount of 25 percent remains optimal. For future experiments, the pruning rate tuning strategy can be more refined by tuning-by-layer and using iterative pruning. 
