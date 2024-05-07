@@ -27,6 +27,7 @@ setup(
     'accelerate', 
     'wandb', 
     'matplotlib', 
+    'pandas', 
   ],
   setup_requires=[
     'pytest-runner'
