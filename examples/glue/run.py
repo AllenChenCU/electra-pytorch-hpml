@@ -178,9 +178,10 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
     parser.add_argument("--prune_structure_type", default="unstructured", type=str, help="unstructured or structured pruning")
     parser.add_argument("--prune_global", default=False, type=ast.literal_eval, help="prune global or layer")
     parser.add_argument("--prune_criterion", default="random", type=str, help="l1, l2 or random criterion")
-    parser.add_argument("--prune_amount", default=0.25, type=float, help="Amount of pruning")
+    parser.add_argument("--prune_amount", default=25, type=int, help="Amount of pruning")
     parser.add_argument("--prune_dim", default=0, type=int, help="pruning dimension (0 or 1)")
     args = parser.parse_args()
+    args.prune_amount = 0.01 * args.prune_amount
 
     ###################################################################################################
     # Config

@@ -162,7 +162,7 @@ python3 examples/glue/run.py \
 #   --prune_structure_type unstructured \
 #   --prune_global True \
 #   --prune_criterion random \
-#   --prune_amount 0.25 \
+#   --prune_amount 25 \
 #   --prune_dim 0
 
 # # Unstructured global l1
@@ -185,7 +185,7 @@ python3 examples/glue/run.py \
 #   --prune_structure_type unstructured \
 #   --prune_global True \
 #   --prune_criterion l1 \
-#   --prune_amount 0.25 \
+#   --prune_amount 25 \
 #   --prune_dim 0
 
 # # Unstructured layer l1
@@ -208,7 +208,7 @@ python3 examples/glue/run.py \
 #   --prune_structure_type unstructured \
 #   --prune_global False \
 #   --prune_criterion l1 \
-#   --prune_amount 0.25 \
+#   --prune_amount 25 \
 #   --prune_dim 0
 
 
@@ -232,7 +232,7 @@ python3 examples/glue/run.py \
 #   --prune_structure_type structured \
 #   --prune_global False \
 #   --prune_criterion l1 \
-#   --prune_amount 0.25 \
+#   --prune_amount 25 \
 #   --prune_dim 0
 
 
@@ -256,7 +256,7 @@ python3 examples/glue/run.py \
 #   --prune_structure_type structured \
 #   --prune_global False \
 #   --prune_criterion l2 \
-#   --prune_amount 0.25 \
+#   --prune_amount 25 \
 #   --prune_dim 0
 
 
@@ -280,7 +280,7 @@ python3 examples/glue/run.py \
 #   --prune_structure_type structured \
 #   --prune_global False \
 #   --prune_criterion l1 \
-#   --prune_amount 0.25 \
+#   --prune_amount 25 \
 #   --prune_dim 1
 
 # # Structured layer l2 col
@@ -303,14 +303,13 @@ python3 examples/glue/run.py \
 #   --prune_structure_type structured \
 #   --prune_global False \
 #   --prune_criterion l2 \
-#   --prune_amount 0.25 \
+#   --prune_amount 25 \
 #   --prune_dim 1
 
 # Tuning the prune amount
 max_prune_amt=65
 for ((i=25; i<=max_prune_amt; i+=10)); do
   output_dir="output/unstructured_l_l1_$i"
-  prune_amt=$((0.01*$i))
   # Unstructured layer l1 @ prune amt
   python3 examples/glue/run.py \
     --model_name_or_path google/electra-small-discriminator \
@@ -331,6 +330,6 @@ for ((i=25; i<=max_prune_amt; i+=10)); do
     --prune_structure_type unstructured \
     --prune_global False \
     --prune_criterion l1 \
-    --prune_amount $prune_amt \
+    --prune_amount $i \
     --prune_dim 0
 done
