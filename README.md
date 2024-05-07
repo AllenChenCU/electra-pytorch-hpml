@@ -86,3 +86,16 @@ python3 examples/glue/run.py \
 ```
 
 ## Results
+
+### LoRA Results
+![LoRA Results](images/lora_results.png?raw=true)
+
+### Quantization Results
+![Quantization Results](images/quantization_results.png?raw=true)
+
+![Tuning Rank and Alpha parameters](images/tuning_rank_and_alpha.png?raw=true)
+
+### Pruning Results
+![Pruning Results](images/pruning_results.png?raw=true)
+
+![Tuning prune rate](images/tuning_prune_rate.png?raw=true)
