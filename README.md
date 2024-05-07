@@ -16,14 +16,14 @@ In this study, we aim to apply the above three memory-efficient optimization tec
 
 This repo branch implements the above techniques on ELECTRA, fine-tunes on MRPC training dataset, and evaluates on MRPC testing dataset.
 
-The code used in this study builds on top of the repo electra-pytorch by lucidrains
+The code used in this study builds on top of the repo electra-pytorch by lucidrains.
 
 ## How to run
 ```
 # Download GLUE data
 python3 examples/glue/download.py --data_dir ./data --tasks MRPC
 
-# Download vocav.txt
+# Download vocab.txt
 cd data
 wget https://huggingface.co/google/electra-small-generator/raw/b3cb16eb009f9e7969e12b0d38be3aeb2c0a9fd4/vocab.txt
 
