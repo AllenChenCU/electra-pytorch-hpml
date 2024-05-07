@@ -58,9 +58,11 @@ def structured_prune_layer(params_to_prune, amount=0.25, n=1, dim=0):
             prune.l1_unstructured(mod, name=name, amount=amount)
 
 #params_to_prune = get_params_to_prune(model)
+
 #unstructured_prune_global(params_to_prune, prune.RandomUnstructured, amount=0.25)
 #unstructured_prune_global(params_to_prune, prune.L1Unstructured, amount=0.25)
 #unstructured_prune_layer(params_to_prune, amount=0.25)
+
 #structured_prune_layer(params_to_prune, amount=0.25, n=1, dim=0)
 #structured_prune_layer(params_to_prune, amount=0.25, n=2, dim=0)
 #structured_prune_layer(params_to_prune, amount=0.25, n=1, dim=1)
