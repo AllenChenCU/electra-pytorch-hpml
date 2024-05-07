@@ -171,6 +171,8 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
     parser.add_argument("--local_rank", type=int, default=-1, help="For distributed training: local_rank")
     parser.add_argument("--server_ip", type=str, default="", help="For distant debugging.")
     parser.add_argument("--server_port", type=str, default="", help="For distant debugging.")
+    parser.add_argument("--lora_rank", type=int, default=64, help="LoRA rank")
+    parser.add_argument("--lora_scale", type=int, default=1, help="LoRA scale")
     parser.add_argument("--finetune_method", type=str, default="original", help="Finetune methodologies: original, lora, or qlora")
     parser.add_argument("--quantization_method", type=str, default="original", help="Quantization methodologies: original, ptsq, or qat")
     parser.add_argument("--inference_on_cpu", default=False, type=ast.literal_eval, help="Whether to run inference on CPU")
@@ -181,6 +183,7 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
     parser.add_argument("--prune_amount", default=25, type=int, help="Amount of pruning")
     parser.add_argument("--prune_dim", default=0, type=int, help="pruning dimension (0 or 1)")
     args = parser.parse_args()
+    args.lora_alpha = args.lora_rank * args.lora_scale
     args.prune_amount = 0.01 * args.prune_amount
 
     ###################################################################################################
@@ -294,8 +297,8 @@ def main(task='MRPC', seed=42, ckpt='google/electra-small-discriminator'):
         lora_config = LoraConfig(
             task_type=TaskType.SEQ_CLS,
             inference_mode=False,
-            r=64, 
-            lora_alpha=64, 
+            r=args.lora_rank, 
+            lora_alpha=args.lora_alpha, 
             target_modules=["key", "query", "value"], 
             lora_dropout=0.1, 
             bias="none", 

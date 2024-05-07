@@ -67,6 +67,30 @@ python3 examples/glue/run.py \
 #   --finetune_method lora \
 #   --quantization_method original
 
+max_lora_rank=128
+max_lora_scale=2
+for((scale=1; scale<=max_lora_scale; scale+=1)); do
+  for ((rank=16; rank<=max_lora_rank; rank*=2)); do
+    output_dir="output/lora_$rank_$scale"
+    python3 examples/glue/run.py \
+      --model_name_or_path google/electra-small-discriminator \
+      --task_name MRPC \
+      --do_train True \
+      --do_eval True \
+      --data_dir data/glue_data/MRPC \
+      --max_seq_length 128 \
+      --per_gpu_train_batch_size 32 \
+      --learning_rate 2e-5 \
+      --num_train_epochs 20.0 \
+      --output_dir $output_dir \
+      --overwrite_output_dir True \
+      --cache_dir electra_small_cache \
+      --finetune_method lora \
+      --quantization_method original \
+      --lora_rank $rank \
+      --lora_scale $scale 
+done
+
 
 # # Command for the QLoRA run
 # # bert-base-uncased
@@ -306,30 +330,30 @@ python3 examples/glue/run.py \
 #   --prune_amount 25 \
 #   --prune_dim 1
 
-# Tuning the prune amount
-max_prune_amt=65
-for ((i=25; i<=max_prune_amt; i+=10)); do
-  output_dir="output/unstructured_l_l1_$i"
-  # Unstructured layer l1 @ prune amt
-  python3 examples/glue/run.py \
-    --model_name_or_path google/electra-small-discriminator \
-    --task_name MRPC \
-    --do_train True \
-    --do_eval True \
-    --data_dir data/glue_data/MRPC \
-    --max_seq_length 128 \
-    --per_gpu_train_batch_size 32 \
-    --learning_rate 2e-5 \
-    --num_train_epochs 20.0 \
-    --output_dir $output_dir \
-    --overwrite_output_dir True \
-    --cache_dir electra_small_cache \
-    --finetune_method original \
-    --quantization_method original \
-    --prune True \
-    --prune_structure_type unstructured \
-    --prune_global False \
-    --prune_criterion l1 \
-    --prune_amount $i \
-    --prune_dim 0
-done
+# # Tuning the prune amount
+# max_prune_amt=65
+# for ((i=25; i<=max_prune_amt; i+=10)); do
+#   output_dir="output/unstructured_l_l1_$i"
+#   # Unstructured layer l1 @ prune amt
+#   python3 examples/glue/run.py \
+#     --model_name_or_path google/electra-small-discriminator \
+#     --task_name MRPC \
+#     --do_train True \
+#     --do_eval True \
+#     --data_dir data/glue_data/MRPC \
+#     --max_seq_length 128 \
+#     --per_gpu_train_batch_size 32 \
+#     --learning_rate 2e-5 \
+#     --num_train_epochs 20.0 \
+#     --output_dir $output_dir \
+#     --overwrite_output_dir True \
+#     --cache_dir electra_small_cache \
+#     --finetune_method original \
+#     --quantization_method original \
+#     --prune True \
+#     --prune_structure_type unstructured \
+#     --prune_global False \
+#     --prune_criterion l1 \
+#     --prune_amount $i \
+#     --prune_dim 0
+# done
