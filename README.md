@@ -7,10 +7,12 @@
 
 The primary objective of this research project is to optimize the development and the serving of ELECTRA language model in practical user applications by exploring memory-saving approaches for fine-tuning and inferencing. 
 
-Techniques:
+Techniques used:
 1. Low-rank adaptation (LoRA and QLoRA)
 2. Quantization (PTSQ and QAT)
 3. Pruning (Unstructured vs Structured and criteria variants)
+
+In this study, we aim to apply the above three memory-efficient optimization techniques to reduce ELECTRA language model size, thereby decreasing its memory footprint and computation time.
 
 This repo branch implements the above techniques on ELECTRA, fine-tunes on MRPC training dataset, and evaluates on MRPC testing dataset.
 
